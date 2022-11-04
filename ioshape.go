@@ -140,6 +140,13 @@ func (r *Reader) Read(b []byte) (n int, err error) {
 	}
 }
 
+type readRequest struct {
+	C chan<- struct{}
+	B []byte
+	N int
+	E error
+}
+
 func Copy(dst io.Writer, src io.Reader, rate int64, period time.Duration) (written int64, err error) {
 	rd := NewReader(src, rate, period)
 	defer rd.Stop()
@@ -150,11 +157,4 @@ func CopyN(dst io.Writer, src io.Reader, n int64, rate int64, period time.Durati
 	rd := NewReader(src, rate, period)
 	defer rd.Stop()
 	return io.CopyN(dst, rd, n)
-}
-
-type readRequest struct {
-	C chan<- struct{}
-	B []byte
-	N int
-	E error
 }
