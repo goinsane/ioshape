@@ -41,7 +41,7 @@ func NewReader(rd io.Reader, rate int64, period time.Duration) *Reader {
 	x.Mul(x, big.NewInt(l.period.Nanoseconds()))
 	x.Quo(x, big.NewInt(1e9))
 	l.leakSize = int(x.Int64())
-	l.bucketSize = 4 * int(x.Int64())
+	l.bucketSize = 1 * int(x.Int64())
 	l.wg.Add(1)
 	go l.readLoop()
 	l.wg.Add(1)
