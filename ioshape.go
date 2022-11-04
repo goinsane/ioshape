@@ -1,3 +1,4 @@
+// Package ioshape provides utilities for bandwidth shaping I/O operations.
 package ioshape
 
 import (
