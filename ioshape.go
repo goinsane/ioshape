@@ -1,4 +1,4 @@
-package shapedio
+package ioshape
 
 import (
 	"bytes"
