@@ -1,4 +1,4 @@
-// Package ioshape provides utilities for bandwidth shaping I/O operations.
+// Package ioshape provides utilities for bandwidth shaping of I/O operations.
 package ioshape
 
 import (
@@ -12,6 +12,7 @@ import (
 	"github.com/goinsane/xcontext"
 )
 
+// Reader implements io.Reader with bandwidth rate limit. Reader uses leaky bucket algorithm.
 type Reader struct {
 	ctx        xcontext.CancelableContext
 	wg         sync.WaitGroup
@@ -27,6 +28,8 @@ type Reader struct {
 	rrCh       chan *readRequest
 }
 
+// NewReader creates new Reader given rate and period.
+// rate is bandwidth limit in bytes per second, period is leak period that used by leaky bucket algorithm.
 func NewReader(rd io.Reader, rate int64, period time.Duration) *Reader {
 	l := &Reader{
 		ctx:    xcontext.WithCancelable2(context.Background()),
@@ -119,10 +122,12 @@ func (r *Reader) writeLoop() {
 	}
 }
 
+// Stop stops bandwidth shaping operations. Stop should be called after the operation was ended.
 func (r *Reader) Stop() {
 	r.ctx.Cancel()
 }
 
+// Read implements (io.Reader).Read. When Stop called, Read drains bucket and returns EOF.
 func (r *Reader) Read(b []byte) (n int, err error) {
 	c := make(chan struct{})
 	rr := &readRequest{
@@ -148,12 +153,14 @@ type readRequest struct {
 	E error
 }
 
+// Copy uses io.Copy with Reader on src argument.
 func Copy(dst io.Writer, src io.Reader, rate int64, period time.Duration) (written int64, err error) {
 	rd := NewReader(src, rate, period)
 	defer rd.Stop()
 	return io.Copy(dst, rd)
 }
 
+// CopyN uses io.CopyN with Reader on src argument.
 func CopyN(dst io.Writer, src io.Reader, n int64, rate int64, period time.Duration) (written int64, err error) {
 	rd := NewReader(src, rate, period)
 	defer rd.Stop()
