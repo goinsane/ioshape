@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"io"
+	"math/big"
 	"sync"
 	"time"
 
@@ -25,7 +26,7 @@ type LeakyBucket struct {
 	rrCh       chan *leakyBucketReadRequest
 }
 
-// NewLeakyBucket creates new LeakyBucket given period, leak and bucket size.
+// NewLeakyBucket creates new LeakyBucket the given period, leak and bucket size.
 func NewLeakyBucket(src io.Reader, period time.Duration, leakSize, bucketSize int64) *LeakyBucket {
 	l := &LeakyBucket{
 		ctx:        xcontext.WithCancelable2(context.Background()),
@@ -143,4 +144,12 @@ type leakyBucketReadRequest struct {
 	B []byte
 	N int
 	E error
+}
+
+// CalculateLeakyBucketLeakSize calculates leak size by the given period and rate. rate is in bytes per second.
+func CalculateLeakyBucketLeakSize(period time.Duration, rate int64) int64 {
+	x := big.NewInt(rate)
+	x.Mul(x, big.NewInt(period.Nanoseconds()))
+	x.Quo(x, big.NewInt(1e9))
+	return x.Int64()
 }
