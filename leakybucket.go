@@ -26,7 +26,7 @@ type LeakyBucket struct {
 	rrCh       chan *leakyBucketReadRequest
 }
 
-// NewLeakyBucket creates new LeakyBucket given period, leak and bucket size.
+// NewLeakyBucket creates new LeakyBucket the given period, leak and bucket size.
 func NewLeakyBucket(src io.Reader, period time.Duration, leakSize, bucketSize int64) *LeakyBucket {
 	l := &LeakyBucket{
 		ctx:        xcontext.WithCancelable2(context.Background()),
