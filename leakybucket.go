@@ -97,14 +97,20 @@ func (a *LeakyBucket) writeLoop() {
 			if nn > nr {
 				nn = nr
 			}
-			a.bufMu.Lock()
-			rr.N, _ = a.buf.Read(rr.B[:nn])
-			if rr.N <= 0 {
-				rr.E = a.bufErr
-			} else {
-				rr.E = nil
+			for {
+				a.bufMu.Lock()
+				rr.N, _ = a.buf.Read(rr.B[:nn])
+				if rr.N <= 0 {
+					rr.E = a.bufErr
+				} else {
+					rr.E = nil
+				}
+				a.bufMu.Unlock()
+				if rr.N > 0 || rr.E != nil {
+					break
+				}
+				time.Sleep(25 * time.Millisecond)
 			}
-			a.bufMu.Unlock()
 			nr -= int64(rr.N)
 			close(rr.C)
 			select {
