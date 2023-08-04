@@ -106,10 +106,10 @@ func (a *LeakyBucket) writeLoop() {
 					rr.E = nil
 				}
 				a.bufMu.Unlock()
-				if rr.N > 0 || rr.E != nil {
+				if a.ctx.Err() != nil || rr.N > 0 || rr.E != nil {
 					break
 				}
-				time.Sleep(25 * time.Millisecond)
+				time.Sleep(time.Second / 64)
 			}
 			nr -= int64(rr.N)
 			close(rr.C)
