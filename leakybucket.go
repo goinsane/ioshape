@@ -47,7 +47,7 @@ func NewLeakyBucket(src io.Reader, period time.Duration, leakSize, bucketSize in
 
 func (a *LeakyBucket) readLoop() {
 	defer a.wg.Done()
-	b := make([]byte, BufferSize)
+	b := make([]byte, 32*1024)
 	for a.ctx.Err() == nil {
 		a.bufMu.Lock()
 		nn := a.bucketSize - int64(a.buf.Len())
