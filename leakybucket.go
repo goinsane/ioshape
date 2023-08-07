@@ -64,6 +64,9 @@ func (a *LeakyBucket) readLoop() {
 			nn = l
 		}
 		n, e := a.src.Read(b)
+		if n < 0 {
+			panic("negative read count")
+		}
 		a.bufMu.Lock()
 		a.buf.Write(b[:n])
 		if e != nil {
@@ -97,7 +100,7 @@ func (a *LeakyBucket) writeLoop() {
 			if nn > nr {
 				nn = nr
 			}
-			for {
+			for a.ctx.Err() == nil {
 				a.bufMu.Lock()
 				rr.N, _ = a.buf.Read(rr.B[:nn])
 				if rr.N <= 0 {
@@ -106,12 +109,15 @@ func (a *LeakyBucket) writeLoop() {
 					rr.E = nil
 				}
 				a.bufMu.Unlock()
-				if a.ctx.Err() != nil || rr.N > 0 || rr.E != nil {
+				nr -= int64(rr.N)
+				if rr.N > 0 || rr.E != nil {
 					break
 				}
-				time.Sleep(time.Second / 64)
+				select {
+				case <-a.ctx.Done():
+				case <-time.After(time.Second / 64):
+				}
 			}
-			nr -= int64(rr.N)
 			close(rr.C)
 			select {
 			case a.bufCh <- struct{}{}:
