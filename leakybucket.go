@@ -7,13 +7,12 @@ import (
 	"math/big"
 	"sync"
 	"time"
-
-	"github.com/goinsane/xcontext"
 )
 
 // LeakyBucket implements leaky bucket algorithm as io.Reader.
 type LeakyBucket struct {
-	ctx        xcontext.CancelableContext
+	ctx        context.Context
+	cancel     context.CancelFunc
 	wg         sync.WaitGroup
 	src        io.Reader
 	period     time.Duration
@@ -28,8 +27,10 @@ type LeakyBucket struct {
 
 // NewLeakyBucket creates new LeakyBucket the given period, leak and bucket size.
 func NewLeakyBucket(src io.Reader, period time.Duration, leakSize, bucketSize int64) *LeakyBucket {
+	ctx, cancel := context.WithCancel(context.Background())
 	l := &LeakyBucket{
-		ctx:        xcontext.WithCancelable2(context.Background()),
+		ctx:        ctx,
+		cancel:     cancel,
 		src:        src,
 		period:     period,
 		leakSize:   leakSize,
@@ -148,7 +149,7 @@ func (a *LeakyBucket) Read(b []byte) (n int, err error) {
 
 // Stop stops bandwidth shaping operations. Stop should be called after the operation was ended.
 func (a *LeakyBucket) Stop() {
-	a.ctx.Cancel()
+	a.cancel()
 }
 
 type leakyBucketReadRequest struct {
